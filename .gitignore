@@ -1,0 +1,16 @@
+*.txt*
+*.en2vi*
+*.vi2en*
+output_dir/*
+__pycache__/*
+*.fixed*
+*_eng
+*_viet
+record
+1st time try len()
+matplot_record.py
+newfile
+Profiling.py
+test_os.py
+checkpoint
+2nd len()
