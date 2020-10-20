@@ -19,6 +19,10 @@ import numpy as np
 import pandas as pd
 import six
 
+def read_nonempty(filename):
+  with open(filename, 'r') as file:
+    return [line.strip() for line in file.readlines()
+            if line.strip() not in ['', '.']]
 
 # bleu_score & tokenize # tensor2tensor
 def tokenize(string):
@@ -154,9 +158,6 @@ def fix_contents(contents):
   contents = new_contents
   
   # third: remove not necessary spaces.
-  # char = '\u0020\u0020'
-  # while char in contents:
-  #   contents = contents.replace('\u0020\u0020','\u0020')
 
   new_contents = ''
   for char in contents:
@@ -175,6 +176,7 @@ def run(cmd):
   print('================\n')
   os.system(cmd)
 
+
 # translate # Trieu Trinh # https://github.com/thtrieu
 def translate_ev(decode_from_file): # name of file "abc.."
   # Set up
@@ -186,7 +188,6 @@ def translate_ev(decode_from_file): # name of file "abc.."
   is_demo = True  # @param {type: "boolean"}
   use_tpu = False
   cr_dir = os.getcwd()
-  # print(cr_dir)
 
   # Now we make all the paths absolute.
 
@@ -202,16 +203,13 @@ def translate_ev(decode_from_file): # name of file "abc.."
     run_logdir = logdir
 
   decode_from_file = os.path.join(cr_dir, decode_from_file)
-  decode_to_file = os.path.join(tmp_dir, '{}.en2vi.txt'.format(decode_from_file))
+  decode_to_file = os.path.join(cr_dir, '{}.en2vi'.format(decode_from_file))
 
   if use_tpu:
     # TPU wants the paths to begin with gs://
     ckpt_dir = logdir.replace(mount_point, 'gs://{}'.format(google_cloud_bucket))
 
   print('Decode to file {}'.format(decode_to_file))
-
-  # t2t_path = '/home/min/anaconda3/lib/python3.7/site-packages/tensor2tensor/bin'
-
 
   run('python t2t_decoder.py' +
       ' --data_dir="{}"'.format(data_dir) + ' --problem={}'.format(problem) +
@@ -234,7 +232,6 @@ def translate_ve(decode_from_file): # name of file "abc.."
   is_demo = True  # @param {type: "boolean"}
   use_tpu = False
   cr_dir = os.getcwd()
-  # print(cr_dir)
 
   # Now we make all the paths absolute.
   logdir = os.path.join(cr_dir, logdir)
@@ -249,15 +246,13 @@ def translate_ve(decode_from_file): # name of file "abc.."
     run_logdir = logdir
 
   decode_from_file = os.path.join(cr_dir, decode_from_file)
-  decode_to_file = os.path.join(tmp_dir, '{}.vi2en.txt'.format(decode_from_file))
+  decode_to_file = os.path.join(cr_dir, '{}.vi2en'.format(decode_from_file))
    
   if use_tpu:
     # TPU wants the paths to begin with gs://
     ckpt_dir = logdir.replace(mount_point, 'gs://{}'.format(google_cloud_bucket))
 
   print('Decode to file {}'.format(decode_to_file))
-
-  # t2t_path = '/home/min/anaconda3/lib/python3.7/site-packages/tensor2tensor'
 
   run('python t2t_decoder.py' +
       ' --data_dir="{}"'.format(data_dir) + ' --problem={}'.format(problem) +
@@ -272,10 +267,11 @@ def translate_ve(decode_from_file): # name of file "abc.."
 
 def compare(cand, cand_transl,  ## list of 1 item;
             ref, ref_transl, library, ## list of items.
-            h=10, z=1):
+            h=1, z=1):
   similarity = []
   data = []
   pair_list = []
+  # len_rate_list = []
 
   for j in range(min(h, len(ref))):
     if not cand:
@@ -289,15 +285,26 @@ def compare(cand, cand_transl,  ## list of 1 item;
     c, ct = cand, cand_transl
     r, rt = ref[j], ref_transl[j]
     q = tuple([c,r])
-
+    len_ratio = 0
+    if len(c) <= len(r):
+      len_ratio = round(len(c)/len(r), 2)
+    else:
+      len_ratio = round(len(r)/len(c), 2)
+    # print('>:', c, r)
+    # print('*: ',len(c), len(r), len_ratio)
+    # input()
+    # len_rate_list += [len_ratio]
     if q not in library:
       data.append((
         (bleu_score(ct, r), ct, r),
         (bleu_score(r, ct), r, ct),
         (bleu_score(c, rt), c, rt),
         (bleu_score(rt, c), rt, c)
-      )) 
-      bleu = sum([b for b, _, _ in data[-1]])/len(data[-1])
+      ))
+      bleu = round(sum([b for b, _, _ in data[-1]])/len(data[-1]), 3)
+      if len_ratio < 0.5:
+        bleu = 0
+
       similarity.append(bleu)
       pair_list.append([c,r])
       library[q] = bleu
@@ -317,19 +324,20 @@ def compare(cand, cand_transl,  ## list of 1 item;
   outpairs.append(pair_list[m])
 
   for i in range (z-1): 
-    similarity[m] = 0;
+    similarity[m] = 0
     temp = max(similarity)
     m = similarity.index(temp)
     index_list.append(m)
     bleu_list.append(temp)
     outpairs.append(pair_list[m])
+  #   input()
 
   return bleu_list, index_list, outpairs, library
 
 
 def ladder_compare(cand, cand_transl,  ## list of more than 3 items
                    ref, ref_transl,  ##library,  ## list of more than 3 items
-                   k=0.2, r=10):
+                   H=1, k=0.2, r=5):
   library = {}
   bleu_frequen = []
   output_list = []
@@ -339,108 +347,82 @@ def ladder_compare(cand, cand_transl,  ## list of more than 3 items
   print('max_i', max_i)
   # input()
   for i in range(max_i):
-    print('round', i)
-    h = (len(ref) - len(cand))//2
+    print('\n round', i)
+    h = int(abs((len(ref) - len(cand)) * H) + 1)
+    # h = int(min(abs((len(ref) - len(cand)) * H) + 1, 7))
     h_list.append(h)
-    # print('h:', h)
-    if len(cand) <= len(ref):
-      bleu_list, index_list,\
-      outpairs, new_library = compare(cand[0], cand_transl[0],
-                                      ref, ref_transl, library,
-                                      h=h, z=2)
-      bleu_divide_list = []
-      bleu_divide_pair = []
-      ind_divide_list = []
-      library = new_library
-      for j in range(len(index_list)):        
-        ind = index_list[j]
-        bl0 = []
-        il0 = []
-        ol0 = []
-        for numb in range(r):
-          h = (len(ref) - len(cand))//2
-          h_list.append(h)
-          # print('h:', h)
-          bl, il, ol, new_lib = compare(cand[1+numb], cand_transl[1+numb],
-                                        ref[(1+ind) : ],
-                                        ref_transl[(1+ind) : ],
-                                        library, h=h, z=1)
-          library = new_lib
-          ind += il[-1]+1
-          bl0 += bl
-          ol0 += ol
-          il0 += [1 + il[-1]]
-          if len(cand) < 1:
-            break
-          if len(ref) < h:
-            break
-        bleu_divide_list += [bl0]
+    bleu_list, index_list,\
+    outpairs, new_library = compare(cand[0], cand_transl[0],
+                                    ref, ref_transl, library,
+                                    h=h, z=3)
+    bleu_divide_list = []
+    bleu_divide_pair = []
+    ind_divide_list = []
+    library = new_library
+    m = bleu_list.index(max(bleu_list)) 
+    for j in range(len(index_list)):        
+      ind = index_list[j]
+      bl0 = []
+      for numb in range(r):
+        h = int(abs((len(ref) - len(cand)) * H) + 1)
+        h_list.append(h)
+        bl, il, ol, new_lib = compare(cand[1+numb], cand_transl[1+numb],
+                                      ref[(1+ind) : ],
+                                      ref_transl[(1+ind) : ],
+                                      library, h=h, z=1)
+        library = new_lib
+        ind += il[-1]+1
+        bl0 += bl
+        if len(cand) < 1:
+          break
+        if len(ref) < h:
+          break
+      bleu_divide_list += [bl0]
       
-      copy_of_bleulist =  []
-      for b in bleu_list:
-        bleu_frequen += [b]
-        copy_of_bleulist += [b]
-
-      for j in range(len(index_list)):
-        copy_of_bleulist[j] += sum(bleu_divide_list[j])
-      
-      # m = copy_of_bleulist.index(max(copy_of_bleulist))
-      # print("index_list",index_list)
-      # print('m:', m)
-      # print(bleu_list[m], outpairs[m])
-      
-      # check if the taken index will fit better on next candidate
-      # if index_list[m] > index_list[m-1]:
-      #   cb, ci, co, clib = compare(cand[1], cand_transl[1],
-      #                              ref[(index_list[m]) : ],
-      #                              ref_transl[(index_list[m]) : ],
-      #                              library, h=h, z=1)
-      #   if ci[-1] == 0:
-      #     if cb[-1] > bleu_list[m]:
-            # haven't consider the scenerio of r > 2
-            # copy_of_bleulist[m] = 0
-            # print("max not the best choice")
-            # print(cb[-1],co[-1])
-
-      n = copy_of_bleulist.index(max(copy_of_bleulist))
-      # print('n:', n)
-      if bleu_list[n] > k:
-        # print('1 added from bleu_list')
-        # print(outpairs[n])
-        output_list.append('**{}, {}\n >> {}\n >> {}\n'.format(
-            i, bleu_list[n], outpairs[n][0], outpairs[n][-1]))
-        # ref = ref[index_list[m]+1 :]
-        # ref_transl = ref_transl[index_list[m]+1 :]
-        del ref[0:index_list[n]+1]
-        del ref_transl[0:index_list[n]+1]
+    check_bleu_list = []
+    print('len(bleu_divide_list[-1]:', len(bleu_divide_list[-1]))
+    for j in range(len(index_list)):
+      check_bleu_list += [sum(bleu_divide_list[j])]
+    
+    n = check_bleu_list.index(max(check_bleu_list))
+    print('max check_bleu_list:', check_bleu_list[n])
+    if m != n:
+      print(check_bleu_list[n])
+      if check_bleu_list[n] <= k * r:
+        n = m
+        print('n=m')
       else:
-        print('add none')
-        ref.pop(0)
-        ref_transl.pop(0)
-        del_count += 1
-      cand.pop(0)
-      cand_transl.pop(0)
+        print('n=n')
+    # input()
+    if bleu_list[n] > k and check_bleu_list[n] > k * r:
+      output_list.append('**{}, {}\n >> {}\n >> {}\n'.format(
+          i, bleu_list[n], outpairs[n][0], outpairs[n][-1]))
+      # output_list.append('>> \n {}\n >> {}\n'.format(
+      #     outpairs[n][0], outpairs[n][-1]))
+      del ref[0:index_list[n]+1]
+      del ref_transl[0:index_list[n]+1]
+    else:
+      ref.pop(0)
+      ref_transl.pop(0)
+      del_count += 1
+    cand.pop(0)
+    cand_transl.pop(0)
 
     print('end round:{} \n cand:{}, ref:{}, lib:{}'.format(
         i, len(cand), len(ref), len(library)))
-    # input()
-    # if i >= 543 and i < 560:
-    #   print('output:', len(output_list))
-      # input()
     
+    h = int(abs((len(ref) - len(cand)) * H) + 1)
     if len(cand) < (r+1):
+      print("case 1")
       return output_list, library, del_count, bleu_frequen, h_list
     if len(ref) < h*(r+1): ## *1200: ## 
       return output_list, library, del_count, bleu_frequen, h_list
-    if len(cand) > len(ref):
-      return output_list, library, del_count, bleu_frequen, h_list
-
+  print('case 3')
   return output_list, library, del_count, bleu_frequen, h_list
 
 
 def beam_compare(cand, cand_transl, ref, ref_transl,
-                 k=0.2, r=10):
-
+                 H=1, k=0.2, r=5):
   history = []
   h_list = []
   if os.path.exists('checkpoint'):
@@ -466,64 +448,52 @@ def beam_compare(cand, cand_transl, ref, ref_transl,
     print('end, no ref')
     return
   
-  while len(cand) <= len(ref):
+  h = int(abs((len(ref) - len(cand)) * H) + 1)
+
+  if len(cand) >= (r+1) and len(ref) >= h*(r+1):
+    output_list, library,\
+    del_count, bleu_frequen, nh_list = ladder_compare(cand, cand_transl,
+                                            ref, ref_transl,
+                                            H=H, k=k, r=r)
+  print('out of ladder_compare')
+  print('cand: {}, ref: {}, output_list:{}'.format(len(cand),
+                                                    len(ref),
+                                                    len(output_list)))
+  # input()
+  h_list += nh_list
+
+  # 1 item left in cand or less than 4 left in ref => no beam loop
+  while cand and ref:
+    h = int(abs((len(ref) - len(cand)) * H) + 1)
+    bleu_list, index_list, outpairs, new_lib = compare(cand[0], cand_transl[0],
+                                              ref, ref_transl, library,
+                                              h=h, z=1)
+    library = new_lib
+    cand.pop(0)
+    cand_transl.pop(0)
+
+    for b in bleu_list:
+      bleu_frequen+= [b]
+
+    if bleu_list[-1] > k:
+      output_list.append('**{} \n {}\n >> {}\n >> {}\n'.format(
+          r, bleu_list[-1], outpairs[-1][0], outpairs[-1][-1]))
+      # output_list.append('>> \n {}\n >> {}\n'.format(
+      #     outpairs[-1][0], outpairs[-1][-1]))
+      print('1 added')
+      del ref[0:index_list[-1]+1]
+      del ref_transl[0:index_list[-1]+1]
+    else:
+      del_count += 1
+      ref.pop(0)
+      ref_transl.pop(0)
+
     if not cand:
       print('end, no cand')
       break
     if not ref:
       print('end, no ref')
       break
-    
-    h = (len(ref) - len(cand))//2
-    h_list.append(h)
-    # print('h:', h)
-    if len(cand) >= (r+1) and len(ref) >= h*(r+1):
-      output_list, library,\
-      del_count, bleu_frequen, nh_list = ladder_compare(cand, cand_transl,
-                                             ref, ref_transl,
-                                             k=k, r=r)
-    print('out of ladder_compare')
-    print('cand: {}, ref: {}, output_list:{}'.format(len(cand),
-                                                     len(ref),
-                                                     len(output_list)))
-    # input()
-    h_list += nh_list
-
-    # 1 item left in cand or less than 4 left in ref => no beam loop
-    if len(cand) <= len(ref):
-      h = (len(ref) - len(cand))//2
-      h_list.append(h)
-      # print('h:', h)
-      for z in range(len(cand)):
-        bleu_list, index_list, outpairs, new_lib = compare(cand[0], cand_transl[0],
-                                                  ref, ref_transl, library,
-                                                  h=h, z=1)
-        library = new_lib
-        cand.pop(0)
-        cand_transl.pop(0)
-
-        for b in bleu_list:
-          bleu_frequen+= [b]
-        # print('bleu_list:', bleu_list)
-
-        if bleu_list[-1] > k:
-          output_list.append('**{}\n >> {}\n'.format(
-              bleu_list[-1], outpairs[-1]))
-          print('1 added')
-          del ref[0:index_list[-1]+1]
-          del ref_transl[0:index_list[-1]+1]
-        else:
-          del_count += 1
-          # print('Not this 1')
-          ref.pop(0)
-          ref_transl.pop(0)
-
-        if not cand:
-          print('end, no cand')
-          break
-        if not ref:
-          print('end, no ref')
-          break
 
   print('*** output_list:', len(output_list))
   print('*** number of eliminate:', del_count)
@@ -531,35 +501,22 @@ def beam_compare(cand, cand_transl, ref, ref_transl,
   print('out of while loop. Recording output...')
 
 
-  with open('checkpoint', 'w') as f:
-    [f.write(line) for line in history]
-    f.write('{} {}\n'.format(len(cand), len(ref)))
+  # with open('checkpoint', 'w') as f:
+  #   [f.write(line) for line in history]
+  #   f.write('{} {}\n'.format(len(cand), len(ref)))
 
   print('output:',len(output_list))
-  with open('newfile', 'w') as newfile:
-    newfile.write("OUTPUT_lIST \n\n")
-    for items in output_list:
-      newfile.write("%s\n\n" %items)
-  with open('record','w') as f:
-    for item in bleu_frequen:
-      f.write('%s\n' %item)
-
-   #plot bleu score range:
-  plt.title("Bleu Frequency", fontsize=14)
-  plt.hist(bleu_frequen, 6)
-
   plt.title("H range", fontsize=14)
   plt.hist(h_list, 10)
   plt.show()
-  # # input()
+  return output_list
 
-def pair_matching(listv,listv2e, liste, liste2v):
+def pair_matching(listv,listv2e, liste, liste2v, H=1):
   print('Pairing ...')
 
   if len(listv) <= len(liste):
-    # h = len(liste) - len(listv)
-    beam_compare(listv, listv2e, liste, liste2v)
+    output_list = beam_compare(listv, listv2e, liste, liste2v, H=H)
   else:
-    # h = len(listv) - len(liste)
-    beam_compare(liste, liste2v, listv, listv2e)
+    output_list = beam_compare(liste, liste2v, listv, listv2e, H=H)
   print('Done') 
+  return output_list
