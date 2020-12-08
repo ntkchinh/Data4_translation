@@ -33,8 +33,8 @@ for en_line, en2vi_line in zip(english_book, en2vi_book):
 
 ### Results
 
-TODO(ntkchinh): add more results here.
+* TODO(ntkchinh): add more results here.
 
 ### Acknowledgement
 
-Special thanks to Trieu H. Trinh (thtrieu@) for guidance o 
+Special thanks to Trieu H. Trinh (thtrieu@) for guidance on this project.
