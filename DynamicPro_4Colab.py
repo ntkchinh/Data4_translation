@@ -34,25 +34,6 @@ def read_nonempty(filename):
     return [line.strip() for line in file.readlines()
             if line.strip() not in ['', '.']]
 
-# eng_file = '13_en.txt'
-# viet_file = '13_vi.txt'  # Get from outside
-
-# numb_of_book = 'book' + eng_file[0:2]
-# cr_dir = os.getcwd()
-
-# vi2en = '{}.fixed.vi2en'.format(viet_file)
-# en2vi = '{}.fixed.en2vi'.format(eng_file)
-
-# eng_file_fixed = lib.fix_file(eng_file)
-# if not os.path.exists(os.path.join(cr_dir, en2vi)):
-# 	lib.translate_ev(eng_file_fixed)
-
-# viet_file_fixed = lib.fix_file(viet_file)
-# if not os.path.exists(os.path.join(cr_dir, vi2en)):
-# 	lib.translate_ve(viet_file_fixed)
-
-
-# bleu_score & tokenize # tensor2tensor
 def tokenize(string):
   return bleu_hook.bleu_tokenize(string)
 
@@ -140,46 +121,12 @@ def compute_bleu(references,
   # print_records()
   return np.float32(bleu)
 
-def test_bleu():
-
-  string1 = 'hello world how are you'
-  string2 = string1
-
-  bleu = compute_bleu(
-    tokenize_then_ngram([string1])[0],
-    tokenize_then_ngram([string2])[0]
-  )
-
-  bleu = cython_bleu.compute_bleu(
-    tokenize_then_ngram([string1])[0],
-    tokenize_then_ngram([string2])[0]
-  )
-
-  assert bleu == 1.0, bleu
-  print('OK')
-
-  string3 = 'this sentence has no overlapping'
-
-  bleu = cython_bleu.compute_bleu(
-    tokenize_then_ngram([string1])[0],
-    tokenize_then_ngram([string3])[0]
-  )
-
-  original_bleu = bleu_hook.compute_bleu(
-      reference_corpus=[bleu_hook.bleu_tokenize(string1)],
-      translation_corpus=[bleu_hook.bleu_tokenize(string3)],
-  )
-
-  assert abs(bleu - original_bleu)<1e-7, (bleu, original_bleu)
-  print('OK')
-
-# test_bleu()
 def Dynamic_matching(eng_file,viet_file):
   numb_of_book = 'book' + eng_file[0:2]
   eng_file_fixed = eng_file + '.fixed'
   viet_file_fixed = viet_file + '.fixed'
-  vi2en = '{}.fixed.vi2en'.format(eng_file)
-  en2vi = '{}.fixed.en2vi'.format(viet_file)
+  vi2en = '{}.fixed.vi2en'.format(viet_file)
+  en2vi = '{}.fixed.en2vi'.format(eng_file)
 
   print('Tokenizing & ngramming ...')
   ef_ngrams = tokenize_then_ngram(read_nonempty(eng_file_fixed))
