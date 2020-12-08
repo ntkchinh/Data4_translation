@@ -122,7 +122,7 @@ def compute_bleu(references,
 
 def Dynamic_matching(eng_file,viet_file,numb_of_book):
   print('Start time: ', datetime.now().time() )
-    numb_of_book = 'book' + str(numb_of_book)
+  numb_of_book = 'book' + str(numb_of_book)
   eng_file_fixed = eng_file + '.fixed'
   viet_file_fixed = viet_file + '.fixed'
   vi2en = '{}.fixed.vi2en'.format(viet_file)
