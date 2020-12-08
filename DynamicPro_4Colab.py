@@ -28,7 +28,6 @@ from profiling import Timer
 import profiling
 from datetime import datetime
 
-print('Start time: ', datetime.now().time() )
 def read_nonempty(filename):
   with open(filename, 'r') as file:
     return [line.strip() for line in file.readlines()
@@ -121,8 +120,9 @@ def compute_bleu(references,
   # print_records()
   return np.float32(bleu)
 
-def Dynamic_matching(eng_file,viet_file):
-  numb_of_book = 'book' + eng_file[0:2]
+def Dynamic_matching(eng_file,viet_file,numb_of_book):
+  print('Start time: ', datetime.now().time() )
+    numb_of_book = 'book' + str(numb_of_book)
   eng_file_fixed = eng_file + '.fixed'
   viet_file_fixed = viet_file + '.fixed'
   vi2en = '{}.fixed.vi2en'.format(viet_file)
