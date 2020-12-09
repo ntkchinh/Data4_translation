@@ -22,38 +22,23 @@ import six
 import problems_vien
 import lib
 import cython_bleu
+import sys
 
 from bleu_hook import _get_ngrams
 from profiling import Timer
 import profiling
 from datetime import datetime
 
-print('Start time: ', datetime.now().time() )
+
 def read_nonempty(filename):
   with open(filename, 'r') as file:
     return [line.strip() for line in file.readlines()
             if line.strip() not in ['', '.']]
 
-eng_file = '13_en.txt'
-viet_file = '13_vi.txt'
-
-cr_dir = os.getcwd()
-
-vi2en = '{}.fixed.vi2en'.format(viet_file)
-en2vi = '{}.fixed.en2vi'.format(eng_file)
-
-eng_file_fixed = lib.fix_file(eng_file)
-if not os.path.exists(os.path.join(cr_dir, en2vi)):
-	lib.translate_ev(eng_file_fixed)
-
-viet_file_fixed = lib.fix_file(viet_file)
-if not os.path.exists(os.path.join(cr_dir, vi2en)):
-	lib.translate_ve(viet_file_fixed)
-
-
 # bleu_score & tokenize # tensor2tensor
 def tokenize(string):
   return bleu_hook.bleu_tokenize(string)
+
 
 def tokenize_then_ngram(list_of_string):
   result = []
@@ -64,6 +49,7 @@ def tokenize_then_ngram(list_of_string):
     result.append((tokens, ngrams))
   # profiling.print_records()
   return result
+
 
 def compute_bleu(references,
                  translations,
@@ -140,7 +126,6 @@ def compute_bleu(references,
   return np.float32(bleu)
 
 
-
 def test_bleu():
 
   string1 = 'hello world how are you'
@@ -174,94 +159,120 @@ def test_bleu():
   assert abs(bleu - original_bleu)<1e-7, (bleu, original_bleu)
   print('OK')
 
-# test_bleu()
-print('Tokenizing & ngramming ...')
-ef_ngrams = tokenize_then_ngram(read_nonempty(eng_file_fixed))
-etf_ngrams = tokenize_then_ngram(read_nonempty(en2vi))
-vf_ngrams = tokenize_then_ngram(read_nonempty(viet_file_fixed))
-vtf_ngrams = tokenize_then_ngram(read_nonempty(vi2en))
-# assert len(ef_ngrams) == len(etf_ngrams)
-# assert len(vf_ngrams) == len(vtf_ngrams)
-# exit()
 
-print('LENGTHs:', len(ef_ngrams), len(vf_ngrams))  # book 20: 3625 x 3596 # book 5: 2479 x 2492
-# exit()
-print('Finish tokenize & ngram time: ', datetime.now().time())
+def Dynamic_matching(eng_file,viet_file,i=0):
+  print('Start time: ', datetime.now().time() )
 
-f = open('working_dir/nothing.book13', 'wb')
+  vi2en = '{}.fixed.vi2en'.format(viet_file)
+  en2vi = '{}.fixed.en2vi'.format(eng_file)
+  eng_file_fixed = eng_file + '.fixed'
+  viet_file_fixed = viet_file + '.fixed'
+  cr_dir = os.getcwd()
 
-# bleu_fn = compute_bleu
-bleu_fn = cython_bleu.compute_bleu
-bleu_list = []
-if not os.path.exists('working_dir/book13_Bleu.nparray'):
-  print('Start calculate bleuscores time: ', datetime.now().time())
-  print('Calculating Bleuscores ...')
+  if not os.path.exists(os.path.join(cr_dir, eng_file_fixed)):
+    eng_file_fixed = lib.fix_file(eng_file)
+  if not os.path.exists(os.path.join(cr_dir, viet_file_fixed)):
+    viet_file_fixed = lib.fix_file(viet_file)
+
+  if not os.path.exists(os.path.join(cr_dir, en2vi)):
+    lib.translate_ev(eng_file_fixed)
+
   
-  for i in range(len(ef_ngrams)):
-  # for i in range(0, 6):
-    if i % 5 == 0:
-      np.save(f,bleu_list)
-      f.close()
-      bleu_list = []
-      f = open('working_dir/{:04d}.book13'.format(i), 'wb')
-    for j in range(len(vf_ngrams)):
-      with Timer('bleu'):
+  if not os.path.exists(os.path.join(cr_dir, vi2en)):
+    lib.translate_ve(viet_file_fixed)
+
+  print('Tokenizing & ngramming ...')
+  ef_ngrams = tokenize_then_ngram(read_nonempty(eng_file_fixed))
+  etf_ngrams = tokenize_then_ngram(read_nonempty(en2vi))
+  vf_ngrams = tokenize_then_ngram(read_nonempty(viet_file_fixed))
+  vtf_ngrams = tokenize_then_ngram(read_nonempty(vi2en))
+  # assert len(ef_ngrams) == len(etf_ngrams)
+  # assert len(vf_ngrams) == len(vtf_ngrams)
+  # exit()
+
+  print('LENGTHs:', len(ef_ngrams), len(vf_ngrams)) 
+  print('Finish tokenize & ngram time: ', datetime.now().time())
+
+  f = open('working_dir/nothing.book{}'.format(numb_of_book), 'wb')
+  # bleu_fn = compute_bleu
+  bleu_fn = cython_bleu.compute_bleu
+  bleu_list = []
+  if not os.path.exists('working_dir/book{}_Bleu.nparray'.format(numb_of_book)):
+    print('Start calculate bleuscores time: ', datetime.now().time())
+    print('Calculating Bleuscores ...')
+
+    for i in range(start_point, len(ef_ngrams)):
+      if i % 5 == 0:
+        np.save(f,bleu_list)
+        f.close()
+        bleu_list = []
+        f = open('working_dir/{:04d}.book{}'.format(i, numb_of_book), 'wb')
+      for j in range(len(vf_ngrams)):
+        # with Timer('bleu'):
         bleu = bleu_fn(ef_ngrams[i], vtf_ngrams[j])
         bleu += bleu_fn(vtf_ngrams[j], ef_ngrams[i])
         bleu += bleu_fn(vf_ngrams[j], etf_ngrams[i])
         bleu += bleu_fn(etf_ngrams[i], vf_ngrams[j])
         bleu_list += [bleu]
-  # profiling.print_records()
-  np.save(f, bleu_list)
-  f.close()
+    # profiling.print_records()
+    np.save(f, bleu_list)
+    f.close()
 
 
-import find_best_pairs
-X = []
-if not os.path.exists('working_dir/book13_Bleu.nparray'):
-  for i in range(len(ef_ngrams)):
-  # for i in range(0, 6):
-    if i%5==0:
-      with open('working_dir/{:04d}.book13'.format(i), 'rb') as f:
-        X += list(np.load(f))
-  # print(len(X), type(X))
-  # exit()
-  X = np.array(X)
-  X = X.reshape([len(ef_ngrams), len(vf_ngrams)])
-  with open('working_dir/book13_Bleu.nparray', 'wb') as f:
-    np.save(f, X)
+  import find_best_pairs
+  X = []
+  if not os.path.exists('working_dir/book{}_Bleu.nparray').format(numb_of_book):
+    for i in range(len(ef_ngrams)):
+      if i%5==0:
+        with open('working_dir/{:04d}.book{}'.format(i, numb_of_book), 'rb') as f:
+          X += list(np.load(f))
+    X = np.array(X)
+    X = X.reshape([len(ef_ngrams), len(vf_ngrams)])
+    with open('working_dir/book{}_Bleu.nparray'.format(numb_of_book), 'wb') as f:
+      np.save(f, X)
 
-  with open('working_dir/book13_Bleu.nparray', 'rb') as f:
+    with open('working_dir/book{}_Bleu.nparray'.format(numb_of_book), 'rb') as f:
+      X_read = np.load(f)
+
+    if X != []:
+      assert np.array_equal(X_read, X)
+
+    X = X_read
+
+  with open('working_dir/book{}_Bleu.nparray'.format(numb_of_book), 'rb') as f:
     X_read = np.load(f)
 
-  if X != []:
-    assert np.array_equal(X_read, X)
+  print('Start pairing time: ', datetime.now().time())
+  print('Pairing ...')
+  pairs = find_best_pairs.fill_in_table(X_read)
 
-  X = X_read
+  print('Finish bleu calculation time: ', datetime.now().time())
+  print('Saving ...')
+  with open('Output_Data/book{}_pairs.txt'.format(numb_of_book), 'w') as f:
+    f.write('Input: {} x {} \n\n'.format(len(ef_ngrams),len(vf_ngrams)))
+    f.write('Output: {} pairs \n\n'.format(len(pairs)))
+    for (i, j) in pairs:
+      eng_sent = ' '.join(ef_ngrams[i][0])
+      vie_sent = ' '.join(vf_ngrams[j][0])
+      f.write('{}\n{}\n\n'.format(eng_sent, vie_sent)) 
 
-with open('working_dir/book13_Bleu.nparray', 'rb') as f:
-  X_read = np.load(f)
+  print('Done')
 
-print('Start pairing time: ', datetime.now().time())
-print('Pairing ...')
-pairs = find_best_pairs.fill_in_table(X_read)
 
-# for (i, j) in pairs[-100:]:
-#   eng_sent = ' '.join(ef_ngrams[i][0])
-#   vie_sent = ' '.join(vf_ngrams[j][0])
-#   print(eng_sent)
-#   print(vie_sent)
-#   print()
-#   input()
+if __name__ == '__main__':
+  test_bleu()
 
-print('Finish bleu calculation time: ', datetime.now().time())
-print('Saving ...')
-with open('Output_Data/book13_pairs.txt', 'w') as f:
-  f.write('Input: {} x {} \n\n'.format(len(ef_ngrams),len(vf_ngrams)))
-  f.write('Output: {} pairs \n\n'.format(len(pairs)))
-  for (i, j) in pairs:
-    eng_sent = ' '.join(ef_ngrams[i][0])
-    vie_sent = ' '.join(vf_ngrams[j][0])
-    f.write('{}\n{}\n\n'.format(eng_sent, vie_sent)) 
-
-print('Done')
+  if len(sys.argv) == 1:
+    print("Nothing to do")
+    exit()
+  elif len(sys.argv) >= 2:
+    numb_of_book = sys.argv[1]
+    int(numb_of_book)
+    if sys.argv[2]:
+      start_point = int(sys.argv[2])
+    else:
+      start_point = 0
+    
+  eng_file = numb_of_book + '_en.txt'
+  viet_file = numb_of_book + '_vi.txt'
+  Dynamic_matching(eng_file, viet_file, start_point)
