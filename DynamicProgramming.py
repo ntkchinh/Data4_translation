@@ -23,6 +23,10 @@ import problems_vien
 import lib
 import cython_bleu
 import sys
+import glob
+import tqdm
+
+import find_best_pairs
 
 from bleu_hook import _get_ngrams
 from profiling import Timer
@@ -40,12 +44,23 @@ def tokenize(string):
   return bleu_hook.bleu_tokenize(string)
 
 
+def get_latest_i(numb_of_book):
+  path = 'working_dir/*.book{}'.format(numb_of_book)
+  files = glob.glob(path)
+  files = [f.split('/')[-1] for f in files if 'nothing' not in f]
+  files = [f.split('.')[0] for f in files]
+  if not files:
+    return 0
+  else:
+    return max([int(f) for f in files])
+
+
 def tokenize_then_ngram(list_of_string):
   result = []
-  for string in list_of_string:
-    with Timer('tok_ngram'):
-      tokens = tokenize(string)
-      ngrams = _get_ngrams(tokens, max_order=4)
+  for string in tqdm.tqdm(list_of_string):
+    # with Timer('tok_ngram'):
+    tokens = tokenize(string)
+    ngrams = _get_ngrams(tokens, max_order=4)
     result.append((tokens, ngrams))
   # profiling.print_records()
   return result
@@ -160,7 +175,7 @@ def test_bleu():
   print('OK')
 
 
-def Dynamic_matching(eng_file,viet_file,i=0):
+def Dynamic_matching(eng_file, viet_file, numb_of_book, start_point=None):
   print('Start time: ', datetime.now().time() )
 
   vi2en = '{}.fixed.vi2en'.format(viet_file)
@@ -182,13 +197,14 @@ def Dynamic_matching(eng_file,viet_file,i=0):
     lib.translate_ve(viet_file_fixed)
 
   print('Tokenizing & ngramming ...')
+  print('eng file')
   ef_ngrams = tokenize_then_ngram(read_nonempty(eng_file_fixed))
+  print('en2vi')
   etf_ngrams = tokenize_then_ngram(read_nonempty(en2vi))
+  print('vi file')
   vf_ngrams = tokenize_then_ngram(read_nonempty(viet_file_fixed))
+  print('vi2en file')
   vtf_ngrams = tokenize_then_ngram(read_nonempty(vi2en))
-  # assert len(ef_ngrams) == len(etf_ngrams)
-  # assert len(vf_ngrams) == len(vtf_ngrams)
-  # exit()
 
   print('LENGTHs:', len(ef_ngrams), len(vf_ngrams)) 
   print('Finish tokenize & ngram time: ', datetime.now().time())
@@ -201,29 +217,34 @@ def Dynamic_matching(eng_file,viet_file,i=0):
     print('Start calculate bleuscores time: ', datetime.now().time())
     print('Calculating Bleuscores ...')
 
-    for i in range(start_point, len(ef_ngrams)):
+    start_point = start_point or get_latest_i(numb_of_book)
+
+    print('Starting to match from i = {}'.format(start_point))
+    ans = input('Look Correct? [y/n]')
+
+    if ans.lower() == 'n':
+      exit()
+
+    for i in tqdm.tqdm(range(start_point, len(ef_ngrams))):
       if i % 5 == 0:
         np.save(f,bleu_list)
         f.close()
         bleu_list = []
         f = open('working_dir/{:04d}.book{}'.format(i, numb_of_book), 'wb')
       for j in range(len(vf_ngrams)):
-        # with Timer('bleu'):
         bleu = bleu_fn(ef_ngrams[i], vtf_ngrams[j])
         bleu += bleu_fn(vtf_ngrams[j], ef_ngrams[i])
         bleu += bleu_fn(vf_ngrams[j], etf_ngrams[i])
         bleu += bleu_fn(etf_ngrams[i], vf_ngrams[j])
         bleu_list += [bleu]
-    # profiling.print_records()
     np.save(f, bleu_list)
     f.close()
 
-
-  import find_best_pairs
   X = []
-  if not os.path.exists('working_dir/book{}_Bleu.nparray').format(numb_of_book):
+  if not os.path.exists('working_dir/book{}_Bleu.nparray'.format(numb_of_book)):
     for i in range(len(ef_ngrams)):
-      if i%5==0:
+      if i % 5 == 0:
+        print('i', i)
         with open('working_dir/{:04d}.book{}'.format(i, numb_of_book), 'rb') as f:
           X += list(np.load(f))
     X = np.array(X)
@@ -258,21 +279,21 @@ def Dynamic_matching(eng_file,viet_file,i=0):
 
   print('Done')
 
-
 if __name__ == '__main__':
   test_bleu()
 
-  if len(sys.argv) == 1:
+  argv = list(sys.argv)
+  argv += [None] * 10
+
+  numb_of_book = argv[1]
+  start_point = argv[2]
+
+  if numb_of_book is None:
     print("Nothing to do")
     exit()
-  elif len(sys.argv) >= 2:
-    numb_of_book = sys.argv[1]
-    int(numb_of_book)
-    if sys.argv[2]:
-      start_point = int(sys.argv[2])
-    else:
-      start_point = 0
     
   eng_file = numb_of_book + '_en.txt'
   viet_file = numb_of_book + '_vi.txt'
-  Dynamic_matching(eng_file, viet_file, start_point)
+
+  print('working on {} and {}'.format(eng_file, viet_file))
+  Dynamic_matching(eng_file, viet_file, numb_of_book, start_point)
