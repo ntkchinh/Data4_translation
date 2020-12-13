@@ -183,7 +183,7 @@ def test_bleu():
   print('OK')
 
 
-def Dynamic_matching(eng_file, viet_file, numb_of_book):
+def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
   print('Start time: ', datetime.now().time() )
 
   vi2en = '{}.fixed.vi2en'.format(viet_file)
@@ -214,8 +214,16 @@ def Dynamic_matching(eng_file, viet_file, numb_of_book):
 
   print('LENGTHs:', len(ef_ngrams), len(vf_ngrams)) 
   print('Finish tokenize & ngram time: ', datetime.now().time())
-  segment = 1000
-  
+  if len(ef_ngrams) >= 2000*2:
+    set_segment = 2000
+  else:
+    set_segment = 1000
+  if input_segment != 0:
+    segment = input_segment
+  else:
+    segment = set_segment
+
+  print('segment: ', segment)
   i, j = find_latest_hk(numb_of_book)
   result = []
   while True:
@@ -322,17 +330,30 @@ def bleu_then_match(ef_ngrams, etf_ngrams, vf_ngrams, vtf_ngrams, numb_of_book, 
 if __name__ == '__main__':
   test_bleu()
 
-  if len(sys.argv) == 1:
+  # if len(sys.argv) == 1:
+  #   print("Nothing to do")
+  #   exit()
+  # elif len(sys.argv) >= 2:
+  #   numb_of_book = sys.argv[1]
+  #   int(numb_of_book)
+  #   # if sys.argv[2]:
+  #   #   start_point = int(sys.argv[2])
+  #   # else:
+  #   #   start_point = 0
+  
+  argv = list(sys.argv)
+  argv += [None] * 10
+
+  numb_of_book = argv[1]
+  if argv[2] != None:
+    segment = argv[2]
+  else:
+    segment = 0
+  
+  if numb_of_book is None:
     print("Nothing to do")
     exit()
-  elif len(sys.argv) >= 2:
-    numb_of_book = sys.argv[1]
-    int(numb_of_book)
-    # if sys.argv[2]:
-    #   start_point = int(sys.argv[2])
-    # else:
-    #   start_point = 0
-    
+
   eng_file = numb_of_book + '_en.txt'
   viet_file = numb_of_book + '_vi.txt'
-  Dynamic_matching(eng_file, viet_file, numb_of_book)
+  Dynamic_matching(eng_file, viet_file, numb_of_book, segment)
