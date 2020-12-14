@@ -208,9 +208,6 @@ def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
   etf_ngrams = tokenize_then_ngram(read_nonempty(en2vi))
   vf_ngrams = tokenize_then_ngram(read_nonempty(viet_file_fixed))
   vtf_ngrams = tokenize_then_ngram(read_nonempty(vi2en))
-  # assert len(ef_ngrams) == len(etf_ngrams)
-  # assert len(vf_ngrams) == len(vtf_ngrams)
-  # exit()
 
   print('LENGTHs:', len(ef_ngrams), len(vf_ngrams)) 
   print('Finish tokenize & ngram time: ', datetime.now().time())
@@ -272,7 +269,7 @@ def bleu_then_match(ef_ngrams, etf_ngrams, vf_ngrams, vtf_ngrams, numb_of_book, 
   bleu_fn = cython_bleu.compute_bleu
   bleu_list = []
 
-  if not os.path.exists('working_dir/book{}_Bleu.nparray'.format(numb_of_book)):
+  if not os.path.exists('working_dir/Bleu_book{}.nparray'.format(numb_of_book)):
     for i in range(latest_i, len(ef_ngrams)):
       if i % 5 == 0:
         np.save(f,bleu_list)
@@ -291,17 +288,17 @@ def bleu_then_match(ef_ngrams, etf_ngrams, vf_ngrams, vtf_ngrams, numb_of_book, 
 
   import find_best_pairs
   X = []
-  if not os.path.exists('working_dir/book{}_Bleu.nparray'.format(numb_of_book)):
+  if not os.path.exists('working_dir/Bleu_book{}.nparray'.format(numb_of_book)):
     for i in range(len(ef_ngrams)):
       if i%5==0:
         with open('working_dir/book{}_{:04d}'.format(numb_of_book, i), 'rb') as f:
           X += list(np.load(f))
     X = np.array(X)
     X = X.reshape([len(ef_ngrams), len(vf_ngrams)])
-    with open('working_dir/book{}_Bleu.nparray'.format(numb_of_book), 'wb') as f:
+    with open('working_dir/Bleu_book{}.nparray'.format(numb_of_book), 'wb') as f:
       np.save(f, X)
 
-    with open('working_dir/book{}_Bleu.nparray'.format(numb_of_book), 'rb') as f:
+    with open('working_dir/Bleu_book{}.nparray'.format(numb_of_book), 'rb') as f:
       X_read = np.load(f)
 
     if X != []:
@@ -309,11 +306,9 @@ def bleu_then_match(ef_ngrams, etf_ngrams, vf_ngrams, vtf_ngrams, numb_of_book, 
 
     X = X_read
 
-  with open('working_dir/book{}_Bleu.nparray'.format(numb_of_book), 'rb') as f:
+  with open('working_dir/Bleu_book{}.nparray'.format(numb_of_book), 'rb') as f:
     X_read = np.load(f)
 
-  # print('Start pairing time: ', datetime.now().time())
-  # print('Pairing ...')
   pairs = find_best_pairs.fill_in_table(X_read)
 
   with open('Output_Data/book{}_pairs.txt'.format(numb_of_book), 'w') as f:
@@ -330,17 +325,6 @@ def bleu_then_match(ef_ngrams, etf_ngrams, vf_ngrams, vtf_ngrams, numb_of_book, 
 if __name__ == '__main__':
   test_bleu()
 
-  # if len(sys.argv) == 1:
-  #   print("Nothing to do")
-  #   exit()
-  # elif len(sys.argv) >= 2:
-  #   numb_of_book = sys.argv[1]
-  #   int(numb_of_book)
-  #   # if sys.argv[2]:
-  #   #   start_point = int(sys.argv[2])
-  #   # else:
-  #   #   start_point = 0
-  
   argv = list(sys.argv)
   argv += [None] * 10
 
