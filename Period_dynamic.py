@@ -43,7 +43,7 @@ def find_latest_hk(numb_of_book):
 
 
 def find_latest_i(numb_of_book, h, k):
-  path = 'working_dir/*.book{}_{}_{}'.format(numb_of_book, h, k)
+  path = 'working_dir/book{}_{}_{}'.format(numb_of_book, h, k)
   files = glob.glob(path)
   i_str = [filename.split('_')[-1] for filename in files]
   latest_i = sorted([int(i) for i in i_str])
