@@ -211,10 +211,13 @@ def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
 
   print('LENGTHs:', len(ef_ngrams), len(vf_ngrams)) 
   print('Finish tokenize & ngram time: ', datetime.now().time())
-  if len(ef_ngrams) >= 2000*2:
+  if len(ef_ngrams) or len(vf_ngrams) < 2000:
+    set_segment = min(len(vf_ngrams), len(ef_ngrams))
+  elif len(ef_ngrams) or len(vf_ngrams) <= 4000:
     set_segment = 2000
   else:
-    set_segment = 1000
+    set_segment = 3000
+
   if input_segment != 0:
     segment = input_segment
   else:
