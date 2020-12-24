@@ -185,93 +185,101 @@ def test_bleu():
 
 def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
   print('Start time: ', datetime.now().time())
-
+  cr_dir = os.getcwd()
   vi2en = '{}.fixed.vi2en'.format(viet_file)
   en2vi = '{}.fixed.en2vi'.format(eng_file)
   eng_file_fixed = eng_file + '.fixed'
   viet_file_fixed = viet_file + '.fixed'
-  cr_dir = os.getcwd()
 
-  if not os.path.exists(os.path.join(cr_dir, eng_file_fixed)):
-    eng_file_fixed = lib.fix_file(eng_file)
-  if not os.path.exists(os.path.join(cr_dir, viet_file_fixed)):
-    viet_file_fixed = lib.fix_file(viet_file)
+  # if not os.path.exists(os.path.join(cr_dir, eng_file_fixed)):
+  #   eng_file_fixed = lib.fix_file(eng_file)
+  # if not os.path.exists(os.path.join(cr_dir, viet_file_fixed)):
+  #   viet_file_fixed = lib.fix_file(viet_file)
 
-  if not os.path.exists(os.path.join(cr_dir, en2vi)):
-    lib.translate_ev(eng_file_fixed)
+  # if not os.path.exists(os.path.join(cr_dir, en2vi)):
+  #   lib.translate_ev(eng_file_fixed)
 
-  if not os.path.exists(os.path.join(cr_dir, vi2en)):
-    lib.translate_ve(viet_file_fixed)
+  # if not os.path.exists(os.path.join(cr_dir, vi2en)):
+  #   lib.translate_ve(viet_file_fixed)
 
-  print('Tokenizing & ngramming ...')
   ef_sentences = read_nonempty(eng_file_fixed)
   etf_sentences = read_nonempty(en2vi)
   vf_sentences = read_nonempty(viet_file_fixed)
   vtf_sentences = read_nonempty(vi2en)
+  
+  if not os.path.exists(cr_dir + '/Output_Data/Pairs_index{}.nparray'.format(numb_of_book)):
+    print('Calculating')
+   
+    print('Tokenizing & ngramming ...')
+    print('eng file')
+    ef_ngrams = tokenize_then_ngram(ef_sentences)
+    print('en2vi')
+    etf_ngrams = tokenize_then_ngram(etf_sentences)
+    print('vi file')
+    vf_ngrams = tokenize_then_ngram(vf_sentences)
+    print('vi2en file')
+    vtf_ngrams = tokenize_then_ngram(vtf_sentences)
 
-  print('Tokenizing & ngramming ...')
-  print('eng file')
-  ef_ngrams = tokenize_then_ngram(ef_sentences)
-  print('en2vi')
-  etf_ngrams = tokenize_then_ngram(etf_sentences)
-  print('vi file')
-  vf_ngrams = tokenize_then_ngram(vf_sentences)
-  print('vi2en file')
-  vtf_ngrams = tokenize_then_ngram(vtf_sentences)
+    print('LENGTHs:', len(ef_ngrams), len(vf_ngrams)) 
 
-  print('LENGTHs:', len(ef_ngrams), len(vf_ngrams)) 
+    print('Finish tokenize & ngram time: ', datetime.now().time())
+    if len(ef_ngrams) < 2000 or len(vf_ngrams) < 2000:
+      set_segment = min(len(vf_ngrams), len(ef_ngrams))
+    elif len(ef_ngrams) <= 4000 or len(vf_ngrams) <= 4000:
+      set_segment = 2000
+    else:
+      set_segment = 3000
 
-  print('Finish tokenize & ngram time: ', datetime.now().time())
-  if len(ef_ngrams) < 2000 or len(vf_ngrams) < 2000:
-    set_segment = min(len(vf_ngrams), len(ef_ngrams))
-  elif len(ef_ngrams) <= 4000 or len(vf_ngrams) <= 4000:
-    set_segment = 2000
-  else:
-    set_segment = 3000
+    if input_segment != 0:
+      segment = input_segment
+    else:
+      segment = set_segment
 
-  if input_segment != 0:
-    segment = input_segment
-  else:
-    segment = set_segment
+    print('segment: ', segment)
+    i, j = find_latest_hk(numb_of_book)
+    result = []
+  
+    while True:
+      i_end = i + segment
+      j_end = j + segment
 
-  print('segment: ', segment)
-  i, j = find_latest_hk(numb_of_book)
-  result = []
-  while True:
-    i_end = i + segment
-    j_end = j + segment
+      if i_end >= len(ef_ngrams) or j_end >= len(vf_ngrams):
+        i_end = len(ef_ngrams)
+        j_end = len(vf_ngrams)
 
-    if i_end >= len(ef_ngrams) or j_end >= len(vf_ngrams):
-      i_end = len(ef_ngrams)
-      j_end = len(vf_ngrams)
+      ef_ngrams_i, etf_ngrams_i  = ef_ngrams[i:i_end], etf_ngrams[i:i_end]
+      vf_ngrams_j, vtf_ngrams_j  = vf_ngrams[j:j_end], vtf_ngrams[j:j_end]
 
-    ef_ngrams_i, etf_ngrams_i  = ef_ngrams[i:i_end], etf_ngrams[i:i_end]
-    vf_ngrams_j, vtf_ngrams_j  = vf_ngrams[j:j_end], vtf_ngrams[j:j_end]
+      pairs = bleu_then_match(ef_ngrams_i, etf_ngrams_i,
+                              vf_ngrams_j, vtf_ngrams_j,
+                              numb_of_book, i, j)
+      
+      for m, n in pairs:
+        result.append([m+i, n+j]) 
+      
+      if i_end == len(ef_ngrams):
+        break
 
-    pairs = bleu_then_match(ef_ngrams_i, etf_ngrams_i,
-                            vf_ngrams_j, vtf_ngrams_j,
-                            numb_of_book, i, j)
-    
-    for m, n in pairs:
-      result.append([m+i, n+j]) 
-    
-    if i_end == len(ef_ngrams):
-      break
+      i, j = result[-1]
+      i += 1
+      j += 1 
+    with open('Output_Data/Pairs_index{}.nparray'.format(numb_of_book), 'wb') as f:
+      np.save(f, result)
+    print('Finish Calculation: ', datetime.now().time())
+  
+  if not os.path.exists(cr_dir + '/Output_Data/book{}_pairs.txt'.format(numb_of_book)):
+    print('Saving ...')
+    with open('Output_Data/Pairs_index{}.nparray'.format(numb_of_book), 'rb') as f:
+      result = np.load(f)
 
-    i, j = result[-1]
-    i += 1
-    j += 1 
-
-  print('Finish: ', datetime.now().time())
-  print('Saving ...')
-  with open('Output_Data/book{}_pairs.txt'.format(numb_of_book), 'w') as f:
-    f.write('Input: {} x {} \n\n'.format(len(ef_ngrams),len(vf_ngrams)))
-    f.write('Output: {} pairs \n\n'.format(len(result)))
-    for (i, j) in result:
-      eng_sent = (ef_sentences[i])
-      vie_sent = (vf_sentences[j])
-      f.write('{}\n{}\n\n'.format(eng_sent, vie_sent)) 
-    
+    with open('Output_Data/book{}_pairs.txt'.format(numb_of_book), 'w') as f:
+      f.write('Input: {} x {} \n\n'.format(len(ef_sentences),len(vf_sentences)))
+      f.write('Output: {} pairs \n\n'.format(len(result)))
+      for (i, j) in result:
+        eng_sent = (ef_sentences[i])
+        vie_sent = (vf_sentences[j])
+        f.write('{}\n{}\n\n'.format(eng_sent, vie_sent)) 
+  
   print('Done')
   print('finish time: ', datetime.now().time())
 
@@ -298,7 +306,7 @@ def bleu_then_match(ef_ngrams, etf_ngrams, vf_ngrams, vtf_ngrams,
         bleu += bleu_fn(vf_ngrams[j], etf_ngrams[i])
         bleu += bleu_fn(etf_ngrams[i], vf_ngrams[j])
         bleu_list += [bleu]
-    np.save(f, bleu_list)
+    np.save(f, np.float32(bleu_list))
     f.close()
 
 
@@ -330,8 +338,7 @@ def bleu_then_match(ef_ngrams, etf_ngrams, vf_ngrams, vtf_ngrams,
   
 
 if __name__ == '__main__':
-  test_bleu()
-
+  # test_bleu()
   argv = list(sys.argv)
   argv += [None] * 10
 
