@@ -184,7 +184,7 @@ def test_bleu():
 
 
 def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
-  print('Start time: ', datetime.now().time() )
+  print('Start time: ', datetime.now().time())
 
   vi2en = '{}.fixed.vi2en'.format(viet_file)
   en2vi = '{}.fixed.en2vi'.format(eng_file)
@@ -204,12 +204,23 @@ def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
     lib.translate_ve(viet_file_fixed)
 
   print('Tokenizing & ngramming ...')
-  ef_ngrams = tokenize_then_ngram(read_nonempty(eng_file_fixed))
-  etf_ngrams = tokenize_then_ngram(read_nonempty(en2vi))
-  vf_ngrams = tokenize_then_ngram(read_nonempty(viet_file_fixed))
-  vtf_ngrams = tokenize_then_ngram(read_nonempty(vi2en))
+  ef_sentences = read_nonempty(eng_file_fixed)
+  etf_sentences = read_nonempty(en2vi)
+  vf_sentences = read_nonempty(viet_file_fixed)
+  vtf_sentences = read_nonempty(vi2en)
+
+  print('Tokenizing & ngramming ...')
+  print('eng file')
+  ef_ngrams = tokenize_then_ngram(ef_sentences)
+  print('en2vi')
+  etf_ngrams = tokenize_then_ngram(etf_sentences)
+  print('vi file')
+  vf_ngrams = tokenize_then_ngram(vf_sentences)
+  print('vi2en file')
+  vtf_ngrams = tokenize_then_ngram(vtf_sentences)
 
   print('LENGTHs:', len(ef_ngrams), len(vf_ngrams)) 
+
   print('Finish tokenize & ngram time: ', datetime.now().time())
   if len(ef_ngrams) < 2000 or len(vf_ngrams) < 2000:
     set_segment = min(len(vf_ngrams), len(ef_ngrams))
@@ -236,7 +247,7 @@ def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
 
     ef_ngrams_i, etf_ngrams_i  = ef_ngrams[i:i_end], etf_ngrams[i:i_end]
     vf_ngrams_j, vtf_ngrams_j  = vf_ngrams[j:j_end], vtf_ngrams[j:j_end]
-    
+
     pairs = bleu_then_match(ef_ngrams_i, etf_ngrams_i,
                             vf_ngrams_j, vtf_ngrams_j,
                             numb_of_book, i, j)
@@ -257,14 +268,16 @@ def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
     f.write('Input: {} x {} \n\n'.format(len(ef_ngrams),len(vf_ngrams)))
     f.write('Output: {} pairs \n\n'.format(len(result)))
     for (i, j) in result:
-      eng_sent = ' '.join(ef_ngrams[i][0])
-      vie_sent = ' '.join(vf_ngrams[j][0])
+      eng_sent = (ef_sentences[i])
+      vie_sent = (vf_sentences[j])
       f.write('{}\n{}\n\n'.format(eng_sent, vie_sent)) 
     
   print('Done')
+  print('finish time: ', datetime.now().time())
 
 
-def bleu_then_match(ef_ngrams, etf_ngrams, vf_ngrams, vtf_ngrams, numb_of_book, h, k):
+def bleu_then_match(ef_ngrams, etf_ngrams, vf_ngrams, vtf_ngrams,
+                    numb_of_book, h, k):
   latest_i = find_latest_i(numb_of_book, h, k)
   numb_of_book = '{}_{}_{}'.format(numb_of_book, h, k)
   f = open('working_dir/nothing.book{}'.format(numb_of_book), 'wb')
@@ -313,15 +326,6 @@ def bleu_then_match(ef_ngrams, etf_ngrams, vf_ngrams, vtf_ngrams, numb_of_book, 
     X_read = np.load(f)
 
   pairs = find_best_pairs.fill_in_table(X_read)
-
-  with open('Output_Data/book{}_pairs.txt'.format(numb_of_book), 'w') as f:
-    f.write('Input: {} x {} \n\n'.format(len(ef_ngrams),len(vf_ngrams)))
-    f.write('Output: {} pairs \n\n'.format(len(pairs)))
-    for (i, j) in pairs:
-      eng_sent = ' '.join(ef_ngrams[i][0])
-      vie_sent = ' '.join(vf_ngrams[j][0])
-      f.write('{}\n{}\n\n'.format(eng_sent, vie_sent)) 
-
   return pairs
   
 
