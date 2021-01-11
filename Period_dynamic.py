@@ -206,6 +206,25 @@ def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
   etf_sentences = read_nonempty(en2vi)
   vf_sentences = read_nonempty(viet_file_fixed)
   vtf_sentences = read_nonempty(vi2en)
+  
+  if len(ef_sentences) > len(etf_sentences):
+    print('len ef # len etf)
+    dif = len(ef_sentences) - len(etf_sentences)
+    del ef_sentences[-dif : ]
+  elif len(ef_sentences) < len(etf_sentences):
+    print('len ef # len etf)
+    dif = len(etf_sentences) - len(ef_sentences)
+    del etf_sentences[-dif : ]
+  
+  if len(vf_sentences) > len(vtf_sentences):
+    print('len vf # len vtf)
+    dif = len(vf_sentences) - len(vtf_sentences)
+    del vf_sentences[-dif : ]
+  elif len(vf_sentences) < len(vtf_sentences):
+    print('len vf # len vtf)
+    dif = len(vtf_sentences) - len(vf_sentences)
+    del vtf_sentences[-dif : ]
+  
   assert len(ef_sentences)==len(etf_sentences), (len(ef_sentences), len(etf_sentences))
   assert len(vf_sentences)==len(vtf_sentences), (len(vf_sentences), len(vtf_sentences))
   
