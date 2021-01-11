@@ -206,6 +206,8 @@ def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
   etf_sentences = read_nonempty(en2vi)
   vf_sentences = read_nonempty(viet_file_fixed)
   vtf_sentences = read_nonempty(vi2en)
+  assert len(ef_sentences)==len(etf_sentences), (len(ef_sentences), len(etf_sentences))
+  assert len(vf_sentences)==len(vtf_sentences), (len(vf_sentences), len(vtf_sentences))
   
   if not os.path.exists(cr_dir + '/Output_Data/Pairs_index{}.nparray'.format(numb_of_book)):
     print('Calculating')
