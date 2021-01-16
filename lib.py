@@ -162,7 +162,7 @@ def fix_and_split(filename):
     contents = fix_contents(contents)
     
     split_contents = sent_tokenize(contents)
-    print('numb of sents after split: ', len(split_contents))
+#     print('numb of sents after split: ', len(split_contents))
     with open(filename+'.fixed', 'w') as file:
       for content in split_contents:
         file.write(content + '\n')
