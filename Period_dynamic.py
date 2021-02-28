@@ -58,6 +58,11 @@ def read_nonempty(filename):
     return [line.strip() for line in file.readlines()
             if line.strip() not in ['', '.']]
 
+
+def read_lines(filename):
+  with open(filename, 'r') as f:
+    return [line.strip() for line in f.readlines()]
+
 # bleu_score & tokenize # tensor2tensor
 def tokenize(string):
   return bleu_hook.bleu_tokenize(string)
@@ -202,28 +207,28 @@ def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
   # if not os.path.exists(os.path.join(cr_dir, vi2en)):
   #   lib.translate_ve(viet_file_fixed)
 
-  ef_sentences = read_nonempty(eng_file_fixed)
-  etf_sentences = read_nonempty(en2vi)
-  vf_sentences = read_nonempty(viet_file_fixed)
-  vtf_sentences = read_nonempty(vi2en)
+  ef_sentences = read_lines(eng_file_fixed)
+  etf_sentences = read_lines(en2vi)
+  vf_sentences = read_lines(viet_file_fixed)
+  vtf_sentences = read_lines(vi2en)
   
-  if len(ef_sentences) > len(etf_sentences):
-    print('len ef # len etf')
-    dif = len(ef_sentences) - len(etf_sentences)
-    del ef_sentences[-dif : ]
-  elif len(ef_sentences) < len(etf_sentences):
-    print('len ef # len etf')
-    dif = len(etf_sentences) - len(ef_sentences)
-    del etf_sentences[-dif : ]
+  # if len(ef_sentences) > len(etf_sentences):
+  #   print('len ef # len etf')
+  #   dif = len(ef_sentences) - len(etf_sentences)
+  #   del ef_sentences[-dif : ]
+  # elif len(ef_sentences) < len(etf_sentences):
+  #   print('len ef # len etf')
+  #   dif = len(etf_sentences) - len(ef_sentences)
+  #   del etf_sentences[-dif : ]
   
-  if len(vf_sentences) > len(vtf_sentences):
-    print('len vf # len vtf')
-    dif = len(vf_sentences) - len(vtf_sentences)
-    del vf_sentences[-dif : ]
-  elif len(vf_sentences) < len(vtf_sentences):
-    print('len vf # len vtf')
-    dif = len(vtf_sentences) - len(vf_sentences)
-    del vtf_sentences[-dif : ]
+  # if len(vf_sentences) > len(vtf_sentences):
+  #   print('len vf # len vtf')
+  #   dif = len(vf_sentences) - len(vtf_sentences)
+  #   del vf_sentences[-dif : ]
+  # elif len(vf_sentences) < len(vtf_sentences):
+  #   print('len vf # len vtf')
+  #   dif = len(vtf_sentences) - len(vf_sentences)
+  #   del vtf_sentences[-dif : ]
   
   assert len(ef_sentences)==len(etf_sentences), (len(ef_sentences), len(etf_sentences))
   assert len(vf_sentences)==len(vtf_sentences), (len(vf_sentences), len(vtf_sentences))
