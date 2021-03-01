@@ -169,6 +169,10 @@ def fix_and_split(filename):
     return filename + '.fixed'
 
 
+import re
+import tqdm
+
+
 def fix_contents(contents):
   # first step: replace special characters 
   check_list = ['\uFE16', '\uFE15', '\u0027','\u2018', '\u2019',
@@ -185,21 +189,26 @@ def fix_contents(contents):
   replace_dict = dict(zip(check_list, alter_chars))
 
   new_contents = ''
-  for char in contents:
+  for char in tqdm.tqdm(contents):
     new_contents += replace_dict.get(char, char)
   contents = new_contents
 
   # second: add spaces
-  check_sp_list = [',', '?', '!', '&apos;', '&quot;', '&#91;', '&#93;', '-']
-  rpl_list = [' , ', ' ? ', ' ! ', ' &apos;', ' &quot; ', ' &#91; ', ' &#93; ', ' - ']
+  check_sp_list = [',', '?', '!', '&apos;', '&quot;', '&#91;', '&#93;', '-', '/', '%', ':', '$', '#', '&', '*']
+  rpl_list = [' , ', ' ? ', ' ! ', ' &apos;', ' &quot; ', ' &#91; ', ' &#93; ', ' - ', ' / ', ' % ', ' : ', ' $ ', ' # ', ' & ', ' * ']
   replace_dict = dict(zip(check_sp_list, rpl_list))
 
   new_contents = ''
   
   i = 0
+  l100 = len(contents)//100
+  
   while i < len(contents):
-    char = contents[i]
+    if i // l100 > (i-1) // l100:
+      sys.stdout.write(str(i//l100) + '% ')
+      sys.stdout.flush()
 
+    char = contents[i]
     found = False
     for string in replace_dict:
       if string == contents[i: i+len(string)]:
@@ -211,12 +220,12 @@ def fix_contents(contents):
     if not found:
       new_contents += char
       i += 1
-
+  print()
   contents = new_contents
 
   # contents = contents.replace('.', ' . ')
   new_contents = ''
-  for i, char in enumerate(contents):
+  for i, char in tqdm.tqdm(enumerate(contents), total=len(contents)):
     if char != '.':
       new_contents += char
       continue
@@ -235,9 +244,8 @@ def fix_contents(contents):
   contents = new_contents
   
   # third: remove not necessary spaces.
-
   new_contents = ''
-  for char in contents:
+  for char in tqdm.tqdm(contents):
     if new_contents and new_contents[-1] == ' ' and char == ' ':
       continue
     new_contents += char
