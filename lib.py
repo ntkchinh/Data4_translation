@@ -188,6 +188,7 @@ def fix_contents(contents):
 
   replace_dict = dict(zip(check_list, alter_chars))
 
+  print('[1/4]')
   new_contents = ''
   for char in tqdm.tqdm(contents):
     new_contents += replace_dict.get(char, char)
@@ -198,16 +199,14 @@ def fix_contents(contents):
   rpl_list = [' , ', ' ? ', ' ! ', ' &apos;', ' &quot; ', ' &#91; ', ' &#93; ', ' - ', ' / ', ' % ', ' : ', ' $ ', ' # ', ' & ', ' * ']
   replace_dict = dict(zip(check_sp_list, rpl_list))
 
+  print('[2/4]')
   new_contents = ''
-  
   i = 0
   l100 = len(contents)//100
-  
   while i < len(contents):
     if i // l100 > (i-1) // l100:
-      sys.stdout.write(str(i//l100) + '% ')
+      sys.stdout.write(str(i // l100) + '%')
       sys.stdout.flush()
-
     char = contents[i]
     found = False
     for string in replace_dict:
@@ -216,7 +215,6 @@ def fix_contents(contents):
         i += len(string)
         found = True
         break
-    
     if not found:
       new_contents += char
       i += 1
@@ -224,6 +222,7 @@ def fix_contents(contents):
   contents = new_contents
 
   # contents = contents.replace('.', ' . ')
+  print('[3/4]')
   new_contents = ''
   for i, char in tqdm.tqdm(enumerate(contents), total=len(contents)):
     if char != '.':
@@ -244,6 +243,7 @@ def fix_contents(contents):
   contents = new_contents
   
   # third: remove not necessary spaces.
+  print('[4/4]')
   new_contents = ''
   for char in tqdm.tqdm(contents):
     if new_contents and new_contents[-1] == ' ' and char == ' ':
