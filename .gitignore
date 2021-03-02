@@ -15,3 +15,11 @@ test_os.py
 checkpoint
 2nd len()
 *.pdf
+law_doc/*
+law_txt/*
+*.en
+*.vi
+medic_txt/*
+medic_split/*
+*_en2vi_*
+*.hrefs
