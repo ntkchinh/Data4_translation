@@ -179,25 +179,35 @@ def fix_contents(contents):
                 '“', '”', '\u3164', '\u1160', 
                 '\u0022', '\u201c', '\u201d', '"',
                 '[', '\ufe47', '(', '\u208d',
-                ']', '\ufe48', ')' , '\u208e', '—', '_']
+                ']', '\ufe48', ')' , '\u208e', 
+                '—', '_', '–', '&']
   alter_chars = ['?', '!', '&apos;', '&apos;', '&apos;',
                  '&quot;', '&quot;', '&quot;', '&quot;', 
                  '&quot;', '&quot;', '&quot;', '&quot;', 
                  '&#91;', '&#91;', '&#91;', '&#91;',
-                 '&#93;', '&#93;', '&#93;', '&#93;', '-', '-']
+                 '&#93;', '&#93;', '&#93;', '&#93;', 
+                 '-', '-', '-', '&amp;']
 
   replace_dict = dict(zip(check_list, alter_chars))
 
   print('[1/4]')
   new_contents = ''
-  for char in tqdm.tqdm(contents):
+  for i, char in tqdm.tqdm(enumerate(contents), total=len(contents)):
+    if char == '&' and (contents[i:i+5] == '&amp;' or
+                        contents[i:i+6] == '&quot;' or
+                        contents[i:i+6] == '&apos;' or
+                        contents[i:i+5] == '&#93;' or
+                        contents[i:i+5] == '&#91;'):
+      new_contents += char
+      continue
     new_contents += replace_dict.get(char, char)
   contents = new_contents
 
   # second: add spaces
-  check_sp_list = [',', '?', '!', '&apos;', '&quot;', '&#91;', '&#93;', '-', '/', '%', ':', '$', '#', '&', '*']
-  rpl_list = [' , ', ' ? ', ' ! ', ' &apos;', ' &quot; ', ' &#91; ', ' &#93; ', ' - ', ' / ', ' % ', ' : ', ' $ ', ' # ', ' & ', ' * ']
-  replace_dict = dict(zip(check_sp_list, rpl_list))
+  check_sp_list = [',', '?', '!', '&apos;', '&amp;', '&quot;', '&#91;', 
+                   '&#93;', '-', '/', '%', ':', '$', '#', '&', '*', ';', '=', '+', '$', '#', '@', '~', '>', '<']
+  # rpl_list = [' , ', ' ? ', ' ! ', ' &apos;', ' &quot; ', ' &#91; ', ' &#93; ', ' - ', ' / ', ' % ', ' : ', ' $ ', ' # ', ' & ', ' * ', ' ; ']
+  # replace_pairs = list(zip(check_sp_list, rpl_list))
 
   print('[2/4]')
   new_contents = ''
@@ -209,9 +219,11 @@ def fix_contents(contents):
       sys.stdout.flush()
     char = contents[i]
     found = False
-    for string in replace_dict:
+    for string in check_sp_list:
       if string == contents[i: i+len(string)]:
-        new_contents += replace_dict[string]
+        new_contents += ' ' + string 
+        if string != '&apos;':
+          new_contents += ' '
         i += len(string)
         found = True
         break
@@ -250,7 +262,7 @@ def fix_contents(contents):
       continue
     new_contents += char
   contents = new_contents
-  contents = contents.replace('* . \n', "* ." )
+  # contents = contents.replace('* . \n', "* ." )
   
   return contents.strip()
 
