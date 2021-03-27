@@ -204,10 +204,10 @@ def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save):
     bleu_list = []
     
     for i in tqdm.tqdm(range(len(ef_ngrams))):
-      bleu = bleu_fn(ef_ngrams[i], vtf_ngrams[j])
-      bleu += bleu_fn(vtf_ngrams[j], ef_ngrams[i])
-      bleu += bleu_fn(vf_ngrams[j], etf_ngrams[i])
-      bleu += bleu_fn(etf_ngrams[i], vf_ngrams[j])
+      bleu = bleu_fn(ef_ngrams[i], vtf_ngrams[i])
+      bleu += bleu_fn(vtf_ngrams[i], ef_ngrams[i])
+      bleu += bleu_fn(vf_ngrams[i], etf_ngrams[i])
+      bleu += bleu_fn(etf_ngrams[i], vf_ngrams[i])
       bleu_list += [bleu]
     
     np.save(f, bleu_list)
