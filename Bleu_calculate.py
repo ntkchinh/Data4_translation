@@ -180,17 +180,28 @@ def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save):
   
     print('Tokenizing & ngramming ...')
     print('eng file')
-    ef_ngrams = tokenize_then_ngram(read_nonempty(eng_file))
-    print('en2vi')
-    etf_ngrams = tokenize_then_ngram(read_nonempty(en2vi))
-    print('vi file')
-    vf_ngrams = tokenize_then_ngram(read_nonempty(viet_file))
-    print('vi2en file')
-    vtf_ngrams = tokenize_then_ngram(read_nonempty(vi2en))
-    bad = []
-    # if len(ef_ngrams)!=len(etf_ngrams) or len(vf_ngrams)!=len(vtf_ngrams) or len(ef_ngrams)!=len(vf_ngrams):
-    #    bad.append(name_to_save)
+    with open(eng_file,'r') as f:
+      eng_lines = f.readlines() 
+    ef_ngrams = tokenize_then_ngram(eng_lines)
 
+    print('en2vi')
+    with open(en2vi,'r') as f:
+      en2vi_lines = f.readlines() 
+    etf_ngrams = tokenize_then_ngram(en2vi_lines)
+
+    print('vi file')
+    with open(viet_file,'r') as f:
+      viet_lines = f.readlines() 
+    vf_ngrams = tokenize_then_ngram(viet_lines)
+
+    print('vi2en file')
+    with open(vi2en,'r') as f:
+      vi2en_lines = f.readlines() 
+    vtf_ngrams = tokenize_then_ngram(vi2en_lines)
+    
+    assert len(ef_ngrams)==len(vf_ngrams)
+    assert len(etf_ngrams)==len(ef_ngrams)
+    assert len(vtf_ngrams)==len(vf_ngrams)
 
     print('LENGTHs:', len(ef_ngrams), len(vf_ngrams)) 
     print('Finish tokenize & ngram time: ', datetime.now().time())
@@ -207,9 +218,10 @@ def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save):
       bleu += bleu_fn(vtf_ngrams[i], ef_ngrams[i])
       bleu += bleu_fn(vf_ngrams[i], etf_ngrams[i])
       bleu += bleu_fn(etf_ngrams[i], vf_ngrams[i])
-      bleu_list += [bleu]
-    
+        bleu_list += [bleu]
+    assert len(bleu_list) in [4643, 4642]
     np.save(f, bleu_list)
+
     f.close()
   
   print('Done working on ccalign_{}'.format(name_to_save))
