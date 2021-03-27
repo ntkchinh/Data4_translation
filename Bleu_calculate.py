@@ -175,7 +175,7 @@ def test_bleu():
   print('OK')
 
 
-def Bleu_calculate(eng_file, viet_file, vi2en, en2vi, name_to_save):
+def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save):
   if not os.path.exists('working_dir/ccalign{}_bleu.nparray'.format(name_to_save)):
   
     print('Tokenizing & ngramming ...')
