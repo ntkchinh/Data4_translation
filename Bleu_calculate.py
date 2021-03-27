@@ -188,8 +188,8 @@ def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save):
     print('vi2en file')
     vtf_ngrams = tokenize_then_ngram(read_nonempty(vi2en))
     bad = []
-    if len(ef_ngrams)!=len(etf_ngrams) or len(vf_ngrams)!=len(vtf_ngrams) or len(ef_ngrams)!=len(vf_ngrams):
-       bad.append(name_to_save)
+    # if len(ef_ngrams)!=len(etf_ngrams) or len(vf_ngrams)!=len(vtf_ngrams) or len(ef_ngrams)!=len(vf_ngrams):
+    #    bad.append(name_to_save)
 
 
     print('LENGTHs:', len(ef_ngrams), len(vf_ngrams)) 
@@ -213,7 +213,7 @@ def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save):
     f.close()
   
   print('Done working on ccalign_{}'.format(name_to_save))
-return bad
+# return bad
 
 # if __name__ == '__main__':
 #   test_bleu()
