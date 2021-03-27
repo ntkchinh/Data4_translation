@@ -1,28 +1,17 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from tensor2tensor.data_generators import text_encoder
-# from tensor2tensor.utils import bleu_hook
 
 import bleu_hook
-import matplotlib.pyplot as plt
-import tensorflow as tf
 import numpy as np
-import collections
 import math
 import os
 import os.path
 import re
 import sys
 import time
-import unicodedata
-import numpy as np
-import pandas as pd
 import six
-import problems_vien
-import lib
 import cython_bleu
-import sys
 import glob
 import tqdm
 
