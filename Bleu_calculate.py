@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import bleu_hook
 import numpy as np
 import math
 import os
@@ -17,7 +16,7 @@ import tqdm
 
 import find_best_pairs
 
-from bleu_hook import _get_ngrams
+from bleu_hook import _get_ngrams, bleu_tokenize, compute_bleu
 from profiling import Timer
 import profiling
 from datetime import datetime
@@ -30,7 +29,7 @@ def read_nonempty(filename):
 
 # bleu_score & tokenize # tensor2tensor
 def tokenize(string):
-  return bleu_hook.bleu_tokenize(string)
+  return bleu_tokenize(string)
 
 
 def get_latest_i(numb_of_book):
@@ -55,10 +54,10 @@ def tokenize_then_ngram(list_of_string):
   return result
 
 
-def compute_bleu(references,
-                 translations,
-                 max_order=4,
-                 use_bp=True):
+def compute_bleu_slow(references,
+                      translations,
+                      max_order=4,
+                      use_bp=True):
   """Computes BLEU score of translated segments against one or more references.
 
   Args:
@@ -155,9 +154,9 @@ def test_bleu():
     tokenize_then_ngram([string3])[0]
   )
 
-  original_bleu = bleu_hook.compute_bleu(
-      reference_corpus=[bleu_hook.bleu_tokenize(string1)],
-      translation_corpus=[bleu_hook.bleu_tokenize(string3)],
+  original_bleu = compute_bleu(
+      reference_corpus=[bleu_tokenize(string1)],
+      translation_corpus=[bleu_tokenize(string3)],
   )
 
   assert abs(bleu - original_bleu)<1e-7, (bleu, original_bleu)
