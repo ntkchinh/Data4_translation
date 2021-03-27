@@ -198,7 +198,7 @@ def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save):
 
     # ENG bleu:
 
-    f = open('working_dir/nothing.ccalign{}_bleu.nparray'.format(name_to_save), 'wb')
+    f = open('working_dir/ccalign{}_bleu.nparray'.format(name_to_save), 'wb')
     # bleu_fn = compute_bleu
     bleu_fn = cython_bleu.compute_bleu
     bleu_list = []
