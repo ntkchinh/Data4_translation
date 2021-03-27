@@ -175,7 +175,7 @@ def test_bleu():
   print('OK')
 
 
-def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save):
+def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save, bad=[]):
   if not os.path.exists('working_dir/ccalign{}_bleu.nparray'.format(name_to_save)):
   
     print('Tokenizing & ngramming ...')
@@ -188,9 +188,13 @@ def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save):
     print('vi2en file')
     vtf_ngrams = tokenize_then_ngram(read_nonempty(vi2en))
 
-    assert len(ef_ngrams)==len(etf_ngrams)
-    assert len(vf_ngrams)==len(vtf_ngrams)
-    assert len(ef_ngrams)==len(vf_ngrams)
+    # assert len(ef_ngrams)==len(etf_ngrams)
+    # assert 
+    # assert len(ef_ngrams)==len(vf_ngrams)
+    if len(ef_ngrams)!=len(etf_ngrams) or 
+       len(vf_ngrams)!=len(vtf_ngrams) or 
+       len(ef_ngrams)!=len(vf_ngrams):
+       bad.append(name_to_save)
 
 
     print('LENGTHs:', len(ef_ngrams), len(vf_ngrams)) 
@@ -214,6 +218,7 @@ def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save):
     f.close()
   
   print('Done working on ccalign_{}'.format(name_to_save))
+return bad
 
 # if __name__ == '__main__':
 #   test_bleu()
