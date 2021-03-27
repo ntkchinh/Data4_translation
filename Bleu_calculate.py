@@ -218,30 +218,18 @@ def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save):
       bleu += bleu_fn(vtf_ngrams[i], ef_ngrams[i])
       bleu += bleu_fn(vf_ngrams[i], etf_ngrams[i])
       bleu += bleu_fn(etf_ngrams[i], vf_ngrams[i])
-        bleu_list += [bleu]
+      bleu_list += [bleu]
     assert len(bleu_list) in [4643, 4642]
     np.save(f, bleu_list)
 
     f.close()
   
   print('Done working on ccalign_{}'.format(name_to_save))
-# return bad
 
-# if __name__ == '__main__':
-#   test_bleu()
 
-#   argv = list(sys.argv)
-#   argv += [None] * 10
-
-#   numb_of_book = argv[1]
-#   start_point = argv[2]
-
-#   if numb_of_book is None:
-#     print("Nothing to do")
-#     exit()
-    
-#   eng_file = numb_of_book + '_en.txt'
-#   viet_file = numb_of_book + '_vi.txt'
-
-#   print('working on {} and {}'.format(eng_file, viet_file))
-#   Dynamic_matching(eng_file, viet_file, numb_of_book, start_point)
+# ef = '8_ccalign.en'
+# vf = '8_ccalign.vi'
+# en2vi = '8_ccalign.en2vi'
+# vi2en = '8_ccalign.vi2en'
+# Bleu_calculate(ef, vf, en2vi, vi2en, 'try8')
+# print('done')
