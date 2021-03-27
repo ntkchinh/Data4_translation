@@ -175,7 +175,7 @@ def test_bleu():
   print('OK')
 
 
-def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save, bad=[]):
+def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save):
   if not os.path.exists('working_dir/ccalign{}_bleu.nparray'.format(name_to_save)):
   
     print('Tokenizing & ngramming ...')
@@ -187,7 +187,7 @@ def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save, bad=[]):
     vf_ngrams = tokenize_then_ngram(read_nonempty(viet_file))
     print('vi2en file')
     vtf_ngrams = tokenize_then_ngram(read_nonempty(vi2en))
-
+    bad = []
     if len(ef_ngrams)!=len(etf_ngrams) or len(vf_ngrams)!=len(vtf_ngrams) or len(ef_ngrams)!=len(vf_ngrams):
        bad.append(name_to_save)
 
