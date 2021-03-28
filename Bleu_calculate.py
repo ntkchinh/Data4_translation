@@ -207,7 +207,7 @@ def Bleu_calculate(eng_file, viet_file, en2vi, vi2en, name_to_save):
       bleu += bleu_fn(vf_ngrams[i], etf_ngrams[i])
       bleu += bleu_fn(etf_ngrams[i], vf_ngrams[i])
       bleu_list += [bleu]
-    assert len(bleu_list) in [4643, 4642]
+    # assert len(bleu_list) in [4643, 4642]
     np.save(f, bleu_list)
 
     f.close()
