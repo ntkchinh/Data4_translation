@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 import six
 from datetime import datetime
-from tqdm import tqdm
+import tqdm
 
 from profiling import Timer, print_records
 import nltk
@@ -111,68 +111,6 @@ def fix_file(filename):
   return filename + '.fixed'
 
 
-def split_parag_by_sentence(contents):
-
-  fix_list1st = []
-  fix_list2nd = []
-  fix_list3rd = []
-  fix_list4th = []
-  list_of_sentence = contents.split('\n')
-  print('numb of paragraphs ', len(list_of_sentence))
-  # split by ' . '
-  for sent in list_of_sentence:
-    if len(sent) >=20:
-      sents = sent.split(' . ')
-      for fix_sent in sents:
-        fix_list1st.append(fix_sent)
-    else:
-      fix_list1st.append(sent)
-
-  # split by ' ! '
-  for sent in fix_list1st:
-    if len(sent) >=20:
-      sents = sent.split(' ! ')
-      for fix_sent in sents:
-        fix_list2nd.append(fix_sent)
-    else:
-      fix_list2nd.append(sent)  
-  # split by ' ? '
-  for sent in fix_list2nd:
-    if len(sent) >=20:
-      sents = sent.split(' ? ')
-      for fix_sent in sents:
-        fix_list3rd.append(fix_sent)
-    else:
-      fix_list3rd.append(sent)
-  # split by ' ;'
-  for sent in fix_list3rd:
-    if len(sent) >=20:
-      sents = sent.split(' ;')
-      for fix_sent in sents:
-        fix_list4th.append(fix_sent)
-    else:
-      fix_list4th.append(sent)
-  return(fix_list4th)
-
-
-def fix_and_split(filename):
-  if not os.path.exists(filename + '.fixed'):
-    with open(filename, 'r') as file:
-      contents = file.read()
-    contents = fix_contents(contents)
-    
-    split_contents = sent_tokenize(contents)
-#     print('numb of sents after split: ', len(split_contents))
-    with open(filename+'.fixed', 'w') as file:
-      for content in split_contents:
-        file.write(content + '\n')
-    return filename + '.fixed'
-
-
-import re
-import tqdm
-
-
 def fix_contents(contents):
   # first step: replace special characters 
   check_list = ['\uFE16', '\uFE15', '\u0027','\u2018', '\u2019',
@@ -233,7 +171,6 @@ def fix_contents(contents):
   print()
   contents = new_contents
 
-  # contents = contents.replace('.', ' . ')
   print('[3/4]')
   new_contents = ''
   for i, char in tqdm.tqdm(enumerate(contents), total=len(contents)):
@@ -262,7 +199,6 @@ def fix_contents(contents):
       continue
     new_contents += char
   contents = new_contents
-  # contents = contents.replace('* . \n', "* ." )
   
   return contents.strip()
 
