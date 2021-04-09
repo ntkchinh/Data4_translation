@@ -67,7 +67,8 @@ def Bleu_calculate(trans_file, ref_file, name_to_save):
     with open(ref_file,'r') as f:
       ref_lines = f.readlines() 
     ref_ngrams = tokenize_then_ngram(ref_file)
-
+    
+    assert len(trans_lines) == len(ref_lines)
     assert len(trans_ngrams)==len(ref_ngrams)
 
     print('LENGTHs:', len(trans_ngrams), len(ref_ngrams)) 
