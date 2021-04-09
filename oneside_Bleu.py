@@ -49,7 +49,9 @@ def tokenize_then_ngram(list_of_string):
     # with Timer('tok_ngram'):
     tokens = tokenize(string)
     ngrams = _get_ngrams(tokens, max_order=4)
-    result.append((tokens, ngrams))
+    result.append(
+        (tokens, ngrams)
+    )
   # profiling.print_records()
   return result
 
@@ -61,13 +63,13 @@ def Bleu_calculate(trans_file, ref_file, name_to_save):
     print('trans file')
     with open(trans_file,'r') as f:
       trans_lines = f.readlines() 
-    trans_ngrams = tokenize_then_ngram(trans_file)
+    trans_ngrams = tokenize_then_ngram(trans_lines)
 
     print('ref file')
     with open(ref_file,'r') as f:
       ref_lines = f.readlines() 
-    ref_ngrams = tokenize_then_ngram(ref_file)
-    
+    ref_ngrams = tokenize_then_ngram(ref_lines)
+
     assert len(trans_lines) == len(ref_lines)
     assert len(trans_ngrams)==len(ref_ngrams)
 
