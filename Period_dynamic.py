@@ -31,8 +31,8 @@ import profiling
 from datetime import datetime
 
 
-def find_latest_hk(numb_of_book):
-  path = 'working_dir/nothing.book{}_*_*'.format(numb_of_book)
+def find_latest_hk(name_of_file):
+  path = 'working_dir/nothing.{}_*_*'.format(name_of_file)
   files = glob.glob(path)
   hk_str = [filename.split('_')[-2:] for filename in files]
   hk = sorted([(int(h), int(k)) for h, k in hk_str])
@@ -42,8 +42,8 @@ def find_latest_hk(numb_of_book):
     return hk[-1]
 
 
-def find_latest_i(numb_of_book, h, k):
-  path = 'working_dir/book{}_{}_{}_*'.format(numb_of_book, h, k)
+def find_latest_i(name_of_file, h, k):
+  path = 'working_dir/{}_{}_{}_*'.format(name_of_file, h, k)
   files = glob.glob(path)
   i_str = [filename.split('_')[-1] for filename in files]
   latest_i = sorted([int(i) for i in i_str])
@@ -188,55 +188,23 @@ def test_bleu():
   print('OK')
 
 
-def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
+def Dynamic_matching(eng_file, viet_file, en2vi, vi2en, name_of_file, input_segment=0):
   print('Start time: ', datetime.now().time())
   cr_dir = os.getcwd()
-  vi2en = '{}.fixed.vi2en'.format(viet_file)
-  en2vi = '{}.fixed.en2vi'.format(eng_file)
   eng_file_fixed = eng_file + '.fixed'
   viet_file_fixed = viet_file + '.fixed'
-
-  # if not os.path.exists(os.path.join(cr_dir, eng_file_fixed)):
-  #   eng_file_fixed = lib.fix_file(eng_file)
-  # if not os.path.exists(os.path.join(cr_dir, viet_file_fixed)):
-  #   viet_file_fixed = lib.fix_file(viet_file)
-
-  # if not os.path.exists(os.path.join(cr_dir, en2vi)):
-  #   lib.translate_ev(eng_file_fixed)
-
-  # if not os.path.exists(os.path.join(cr_dir, vi2en)):
-  #   lib.translate_ve(viet_file_fixed)
 
   ef_sentences = read_lines(eng_file_fixed)
   etf_sentences = read_lines(en2vi)
   vf_sentences = read_lines(viet_file_fixed)
   vtf_sentences = read_lines(vi2en)
-
-  
-  # if len(ef_sentences) > len(etf_sentences):
-  #   print('len ef # len etf')
-  #   dif = len(ef_sentences) - len(etf_sentences)
-  #   del ef_sentences[-dif : ]
-  # elif len(ef_sentences) < len(etf_sentences):
-  #   print('len ef # len etf')
-  #   dif = len(etf_sentences) - len(ef_sentences)
-  #   del etf_sentences[-dif : ]
-  
-  # if len(vf_sentences) > len(vtf_sentences):
-  #   print('len vf # len vtf')
-  #   dif = len(vf_sentences) - len(vtf_sentences)
-  #   del vf_sentences[-dif : ]
-  # elif len(vf_sentences) < len(vtf_sentences):
-  #   print('len vf # len vtf')
-  #   dif = len(vtf_sentences) - len(vf_sentences)
-  #   del vtf_sentences[-dif : ]
   
   if len(ef_sentences) != len(etf_sentences) or len(vf_sentences) != len(vtf_sentences):
     print(len(ef_sentences), len(etf_sentences))
     print(eng_file, viet_file)
     return
   
-  if not os.path.exists(cr_dir + '/Output_Data/Pairs_index{}.nparray'.format(numb_of_book)):
+  if not os.path.exists(cr_dir + '/Output_Data/Pairs_index{}.nparray'.format(name_of_file)):
     print('Calculating')
    
     print('Tokenizing & ngramming ...')
@@ -265,7 +233,7 @@ def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
       segment = set_segment
 
     print('segment: ', segment)
-    i, j = find_latest_hk(numb_of_book)
+    i, j = find_latest_hk(name_of_file)
     result = []
   
     while True:
@@ -281,7 +249,7 @@ def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
 
       pairs = bleu_then_match(ef_ngrams_i, etf_ngrams_i,
                               vf_ngrams_j, vtf_ngrams_j,
-                              numb_of_book, i, j)
+                              name_of_file, i, j)
       
       for m, n in pairs:
         result.append([m+i, n+j]) 
@@ -292,16 +260,16 @@ def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
       i, j = result[-1]
       i += 1
       j += 1 
-    with open('Output_Data/Pairs_index{}.nparray'.format(numb_of_book), 'wb') as f:
+    with open('Output_Data/Pairs_index{}.nparray'.format(name_of_file), 'wb') as f:
       np.save(f, result)
     print('Finish Calculation: ', datetime.now().time())
   
-  if not os.path.exists(cr_dir + '/Output_Data/book{}_pairs.txt'.format(numb_of_book)):
+  if not os.path.exists(cr_dir + '/Output_Data/{}_pairs.txt'.format(name_of_file)):
     print('Saving ...')
-    with open('Output_Data/Pairs_index{}.nparray'.format(numb_of_book), 'rb') as f:
+    with open('Output_Data/Pairs_index{}.nparray'.format(name_of_file), 'rb') as f:
       result = np.load(f)
 
-    with open('Output_Data/book{}_pairs.txt'.format(numb_of_book), 'w') as f:
+    with open('Output_Data/{}_pairs.txt'.format(name_of_file), 'w') as f:
       f.write('Input: {} x {} \n\n'.format(len(ef_sentences),len(vf_sentences)))
       f.write('Output: {} pairs \n\n'.format(len(result)))
       for (i, j) in result:
@@ -314,21 +282,21 @@ def Dynamic_matching(eng_file, viet_file, numb_of_book, input_segment=0):
 
 
 def bleu_then_match(ef_ngrams, etf_ngrams, vf_ngrams, vtf_ngrams,
-                    numb_of_book, h, k):
-  latest_i = find_latest_i(numb_of_book, h, k)
-  numb_of_book = '{}_{}_{}'.format(numb_of_book, h, k)
-  f = open('working_dir/nothing.book{}'.format(numb_of_book), 'wb')
+                    name_of_file, h, k):
+  latest_i = find_latest_i(name_of_file, h, k)
+  name_of_file = '{}_{}_{}'.format(name_of_file, h, k)
+  f = open('working_dir/nothing.{}'.format(name_of_file), 'wb')
   # bleu_fn = compute_bleu
   bleu_fn = cython_bleu.compute_bleu
   bleu_list = []
 
-  if not os.path.exists('working_dir/Bleu_book{}.nparray'.format(numb_of_book)):
+  if not os.path.exists('working_dir/Bleu_{}.nparray'.format(name_of_file)):
     for i in range(latest_i, len(ef_ngrams)):
       if i % 5 == 0:
         np.save(f,bleu_list)
         f.close()
         bleu_list = []
-        f = open('working_dir/book{}_{:04d}'.format(numb_of_book, i), 'wb')
+        f = open('working_dir/{}_{:04d}'.format(name_of_file, i), 'wb')
       for j in range(len(vf_ngrams)):
         bleu = bleu_fn(ef_ngrams[i], vtf_ngrams[j])
         bleu += bleu_fn(vtf_ngrams[j], ef_ngrams[i])
@@ -341,17 +309,17 @@ def bleu_then_match(ef_ngrams, etf_ngrams, vf_ngrams, vtf_ngrams,
 
   import find_best_pairs
   X = []
-  if not os.path.exists('working_dir/Bleu_book{}.nparray'.format(numb_of_book)):
+  if not os.path.exists('working_dir/Bleu_{}.nparray'.format(name_of_file)):
     for i in range(len(ef_ngrams)):
       if i%5==0:
-        with open('working_dir/book{}_{:04d}'.format(numb_of_book, i), 'rb') as f:
+        with open('working_dir/{}_{:04d}'.format(name_of_file, i), 'rb') as f:
           X += list(np.load(f))
     X = np.array(X)
     X = X.reshape([len(ef_ngrams), len(vf_ngrams)])
-    with open('working_dir/Bleu_book{}.nparray'.format(numb_of_book), 'wb') as f:
+    with open('working_dir/Bleu_{}.nparray'.format(name_of_file), 'wb') as f:
       np.save(f, X)
 
-    with open('working_dir/Bleu_book{}.nparray'.format(numb_of_book), 'rb') as f:
+    with open('working_dir/Bleu_{}.nparray'.format(name_of_file), 'rb') as f:
       X_read = np.load(f)
 
     if X != []:
@@ -359,7 +327,7 @@ def bleu_then_match(ef_ngrams, etf_ngrams, vf_ngrams, vtf_ngrams,
 
     X = X_read
 
-  with open('working_dir/Bleu_book{}.nparray'.format(numb_of_book), 'rb') as f:
+  with open('working_dir/Bleu_{}.nparray'.format(name_of_file), 'rb') as f:
     X_read = np.load(f)
 
   pairs = find_best_pairs.fill_in_table(X_read)
@@ -371,16 +339,16 @@ if __name__ == '__main__':
   argv = list(sys.argv)
   argv += [None] * 10
 
-  numb_of_book = argv[1]
+  name_of_file = argv[1]
   if argv[2] != None:
     segment = argv[2]
   else:
     segment = 0
   
-  if numb_of_book is None:
+  if name_of_file is None:
     print("Nothing to do")
     exit()
 
-  eng_file = numb_of_book + '_en.txt'
-  viet_file = numb_of_book + '_vi.txt'
-  Dynamic_matching(eng_file, viet_file, numb_of_book, segment)
+  eng_file = name_of_file + '_en.txt'
+  viet_file = name_of_file + '_vi.txt'
+  Dynamic_matching(eng_file, viet_file, name_of_file, segment)
