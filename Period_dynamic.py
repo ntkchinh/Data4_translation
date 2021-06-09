@@ -220,25 +220,48 @@ def Dynamic_matching(eng_file, viet_file, en2vi, vi2en, name_of_file, input_segm
     print('LENGTHs:', len(ef_ngrams), len(vf_ngrams)) 
 
     print('Finish tokenize & ngram time: ', datetime.now().time())
-    if len(ef_ngrams) < 2000 or len(vf_ngrams) < 2000:
-      set_segment = min(len(vf_ngrams), len(ef_ngrams))
-    elif len(ef_ngrams) <= 4000 or len(vf_ngrams) <= 4000:
-      set_segment = 2000
-    else:
-      set_segment = 3000
+    
+    #  OLD
+      # if len(ef_ngrams) < 2000 or len(vf_ngrams) < 2000:
+      #   set_segment = min(len(vf_ngrams), len(ef_ngrams))
+      # elif len(ef_ngrams) <= 4000 or len(vf_ngrams) <= 4000:
+      #   set_segment = 2000
+      # else:
+      #   set_segment = 3000
 
+      # if input_segment != 0:
+      #   segment = input_segment
+      # else:
+      #   segment = set_segment
+
+      # print('segment: ', segment)
+    
+    # NEW
     if input_segment != 0:
-      segment = input_segment
+      segment_i = input_segment
+      segment_j = input_segment
     else:
-      segment = set_segment
+      if len(ef_ngrams) < 2000 or len(vf_ngrams) < 2000:
+        segment_i = len(ef_ngrams)
+        segment_j = len(vf_ngrams)
+      elif len(ef_ngrams) <= 4000 or len(vf_ngrams) <= 4000:
+        segment_i = 2000
+        segment_j = 2000
+      else:
+        segment_i = 3000
+        segment_j = 3000
 
-    print('segment: ', segment)
+    # print('segment: ', segment)
+
     i, j = find_latest_hk(name_of_file)
     result = []
   
     while True:
-      i_end = i + segment
-      j_end = j + segment
+      # i_end = i + segment
+      # j_end = j + segment
+      i_end = i + segment_i
+      j_end = j + segment_j
+
 
       if i_end >= len(ef_ngrams) or j_end >= len(vf_ngrams):
         i_end = len(ef_ngrams)
@@ -340,10 +363,10 @@ if __name__ == '__main__':
   argv += [None] * 10
 
   name_of_file = argv[1]
-  if argv[2] != None:
-    segment = argv[2]
-  else:
-    segment = 0
+  # if argv[2] != None:
+  #   segment = argv[2]
+  # else:
+  #   segment = 0
   
   if name_of_file is None:
     print("Nothing to do")
@@ -351,4 +374,4 @@ if __name__ == '__main__':
 
   eng_file = name_of_file + '_en.txt'
   viet_file = name_of_file + '_vi.txt'
-  Dynamic_matching(eng_file, viet_file, name_of_file, segment)
+  Dynamic_matching(eng_file, viet_file, name_of_file)
