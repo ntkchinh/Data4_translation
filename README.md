@@ -15,8 +15,7 @@ We tested and show that the method provides ~99% precision, compare to much wors
 ```
 
 ### Results 
-This data set is used to train Machine Translation model for English-Vietnamese.
-The results of the model on translation tasks could be seen [here](https://blog.vietai.org/sat/)
+This data set is used to train [this State-of-the-art](https://blog.vietai.org/sat/) Machine Translation model for English-Vietnamese.
 
 ### Acknowledgement
 
