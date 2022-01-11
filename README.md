@@ -15,63 +15,8 @@ We tested and show that the method provides ~99% precision, compare to much wors
 ```
 
 ### Results 
-Translate from English to Vietnamese
-
-<table align="center">
-<thead>
-<tr>
-<th></th>
-<th>BLEU score</th>
-<!-- <th>Vietnamese to English</th> -->
-<th>With extra training data</th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>This project</td>
-<td>37.60</td>
-<!-- <td></td> -->
-<td>yes</td>
-</tr>
-
-<tr>
-<td>Google translate</td>
-<td>37.06</td>
-<!-- <td></td> -->
-<td>yes</td>
-</tr>
-
-<tr>
-<td>Transformer+BPE-dropout</td>
-<td>33.27</td>
-<!-- <td></td> -->
-<td>no</td>
-</tr>
-
-<tr>
-<td>Transformer+BPE+FixNorm+ScaleNorm</td>
-<td>32.8</td>
-<!-- <td></td> -->
-<td>no</td>
-</tr>
-
-<tr>
-<td>Transformer+LayerNorm-simple</td>
-<td>31.4</td>
-<!-- <td></td> -->
-<td>no</td>
-</tr>
-
-<tr>
-<td>CVT</td>
-<td>29.6</td>
-<!-- <td></td> -->
-<td>yes</td>
-</tr>
-
-</tbody>
-</table>
+This data set is used to train Machine Translation model for English-Vietnamese.
+The results of the model on translation tasks could be seen here(https://blog.vietai.org/sat/)
 
 ### Acknowledgement
 
